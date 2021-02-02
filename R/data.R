@@ -395,3 +395,32 @@
 #'
 "daily_rch"
 
+#'Rivers data
+#'
+#'Data of river network used in modeling.
+#'
+#' @format A sf data.frame with 2 variables:
+#' \describe{
+#' \item{CID}{Catchment ID}
+#' \item{geometry}{Geometry of objects}
+#' }
+#'
+"rivers"
+
+#'Basin data
+#'
+#'Data of basins used in modeling.
+#'
+#' @format A sf data.frame with 2 variables:
+#' \describe{
+#' \item{Setup_name}{SWAT setup name}
+#' \item{Reach}{Reach number correcting to reach or subbasin numbers in SWAT ouput files.}
+#' \item{CID}{Catchment ID. It is the same as in rivers CID.}
+#' \item{Subbasin}{Subbasins aggregating SWAT setups.}
+#' \item{Area}{Area in km2}
+#' \item{CIDto}{CID of subbasin where water flows out of this subbasin}
+#' \item{geometry}{Geometry of objects}
+#' }
+#'
+"basins"
+
