@@ -5,7 +5,7 @@
 \alias{basins}
 \title{Basin data}
 \format{
-A sf data.frame with 2 variables:
+A sf data.frame with 7 variables:
 \describe{
 \item{Setup_name}{SWAT setup name}
 \item{Reach}{Reach number correcting to reach or subbasin numbers in SWAT ouput files.}
