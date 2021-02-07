@@ -5,12 +5,9 @@
 #'
 #' @param watersheds_folder_path String giving path to the Watersheds folder where all output results are saved.
 #' (example "../../MODEL/MODEL_CLIMATE_LONG/Setup/Watersheds")
-#' @param climate_scenarios Vector providing climate data name used in saving modeling results.
-#' For example, if results were saved in 'HIRHAM5_rcp45_measure_30'  and 'HIRHAM5_rcp85_measure_30'
-#' when climate_scenarios = c("HIRHAM5_rcp45", "HIRHAM5_rcp85")
-#' @param measure_scenarios Vector providing measures name used in saving modeling results.
-#' For example, if results were saved in 'HIRHAM5_rcp45_measure_30'  and 'HIRHAM5_rcp45_measure_31'
-#' when measure_scenarios = c("measure_30", "measure_31")
+#' @param scenarios Vector providing scenario name used in saving modeling results. Example for combining climate and measures could be:
+#' as.vector(outer(c("C1", "C2"), c("M1", "M2"), paste, sep="_")). This would allow generation of vector, which could be used in loop.
+#' An example, scenarios = c("HIRHAM5_rcp45_measure_30'", "HIRHAM5_rcp45_measure_31", "HIRHAM5_rcp85_measure_30", "HIRHAM5_rcp85_measure_31")
 #' @param output_type Number the same as in IPRINT (0 - Monthly, 1 - Daily, 2 - Year)
 #' @param starting_date Sting with time series starting date (example "1997-01-01")
 #' @param ending_date Sting with time series ending date (example "2019-12-31")
@@ -20,11 +17,11 @@
 #' @importFrom sf st_set_geometry
 #' @importFrom dplyr bind_cols bind_rows arrange %>%
 #' @export
-#' @example
-#' r <- extract_watersheds_output("/Ws", c("C1", "C2"), c("M1", "M2"), 2, "1997-01-01", "2099-12-31")
+#' @examples
+#' r <- extract_watersheds_output("/Watersheds", c("C1", "C2"), 2, "1997-01-01", "2099-12-31")
 
-extract_watersheds_output <- function(watersheds_folder_path, climate_scenarios, measure_scenarios,
-                                      output_type, starting_date, ending_date, save_results_to_files = FALSE){
+extract_watersheds_output <- function(watersheds_folder_path, scenarios, output_type, starting_date, ending_date,
+                                      save_results_to_files = FALSE){
 
   #################################################################
   ####              Loop to extract modeling data              ####
@@ -44,63 +41,56 @@ extract_watersheds_output <- function(watersheds_folder_path, climate_scenarios,
     subbasin_name <- setups_to_loop[row, "Subbasin"]
     setup_name  <- setups_to_loop[row, "Setup_name"]
     print(paste("Started extracting", subbasin_name, setup_name))
-    for (climate in climate_scenarios){
-      for (measure in measure_scenarios){
-        ##Forming path to modeling result folder
-        scenario_path <- paste0(watersheds_folder_path, "/", subbasin_name,
-                                "/", setup_name, "/SWAT/", climate, "_", measure)
-        rch_path <- paste0(scenario_path, "/output.rch")
-        sub_path <- paste0(scenario_path, "/output.sub")
-        hru_path <- paste0(scenario_path, "/output.hru")
+    for (scenario in scenarios){
+      ##Forming path to modeling result folder
+      scenario_path <- paste0(watersheds_folder_path, "/", subbasin_name,
+                              "/", setup_name, "/SWAT/", scenario)
+      rch_path <- paste0(scenario_path, "/output.rch")
+      sub_path <- paste0(scenario_path, "/output.sub")
+      hru_path <- paste0(scenario_path, "/output.hru")
 
-        ##Checking if files exists and they are not empty
-        if (file.exists(rch_path) &
-            file.info(rch_path) > 2000 &
-            file.exists(sub_path) &
-            file.info(sub_path) > 2000 &
-            file.exists(hru_path) &
-            file.info(hru_path) > 2000){
-          ##Extracting and cleaning data from SWAT output.*** files
-          ##Saving output.rch file
-          rch <- clean_swat_output(read_swat_output(scenario_path, output_type,"rch",
-                                                    starting_date, ending_date))
-          rch <- bind_cols(rch, SUBBASIN = subbasin_name, SETUP = setup_name,
-                           CLIMATE = climate, MEASURE = measure)
-          ##Saving output.sub file
-          sub <- clean_swat_output(read_swat_output(scenario_path, output_type,"sub",
-                                                    starting_date, ending_date))
-          sub <- bind_cols(sub, SUBBASIN = subbasin_name, SETUP = setup_name,
-                           CLIMATE = climate, MEASURE = measure)
-          ##Saving output.hru file
-          hru <- clean_swat_output(read_swat_output(scenario_path, output_type,"hru",
-                                                    starting_date, ending_date))
-          hru <- bind_cols(hru, SUBBASIN = subbasin_name, SETUP = setup_name,
-                           CLIMATE = climate, MEASURE = measure)
+      ##Checking if files exists and they are not empty
+      if ((file.exists(rch_path) &
+          file.exists(sub_path) &
+          file.exists(hru_path)) &
+          (file.info(rch_path)$size > 2000 &
+           file.info(sub_path)$size > 2000 &
+           file.info(hru_path)$size > 2000)) {
+        ##Extracting and cleaning data from SWAT output.*** files
+        ##Saving output.rch file
+        rch <- clean_swat_output(read_swat_output(scenario_path, output_type, "rch",
+                                                  starting_date, ending_date))
+        rch <- bind_cols(rch, SUBBASIN = subbasin_name, SETUP = setup_name, SC_FOLDER = scenario)
+        ##Saving output.sub file
+        sub <- clean_swat_output(read_swat_output(scenario_path, output_type, "sub",
+                                                  starting_date, ending_date))
+        sub <- bind_cols(sub, SUBBASIN = subbasin_name, SETUP = setup_name, SC_FOLDER = scenario)
+        ##Saving output.hru file
+        hru <- clean_swat_output(read_swat_output(scenario_path, output_type, "hru",
+                                                  starting_date, ending_date))
+        hru <- bind_cols(hru, SUBBASIN = subbasin_name, SETUP = setup_name, SC_FOLDER = scenario)
 
-          ##Saving to a single dataframe each of output files.
-          ##Add column for the scenario, which shows basins, setup, climate data and
-          ##measure used.
-          rch <- within(rch,  SCENARIO <- paste(SUBBASIN, SETUP, CLIMATE, MEASURE,
-                                                sep="_"))
-          sub <- within(sub,  SCENARIO <- paste(SUBBASIN, SETUP, CLIMATE, MEASURE,
-                                                sep="_"))
-          hru <- within(hru,  SCENARIO <- paste(SUBBASIN, SETUP, CLIMATE, MEASURE,
-                                                sep="_"))
+        ##Saving to a single dataframe each of output files.
+        ##Add column for the scenario, which shows basins, setup, climate data and
+        ##measure used.
 
-          ##Saving results
-          if (row == 1){
-            df_rch <- rch
-            df_sub <- sub
-            df_hru <- hru
-          } else {
-            df_rch <- bind_rows(df_rch, rch)
-            df_sub <- bind_rows(df_sub, sub)
-            df_hru <- bind_rows(df_hru, hru)
-          }
+        rch <- within(rch,  SCENARIO <- paste(SUBBASIN, SETUP, SC_FOLDER, sep="_"))
+        sub <- within(sub,  SCENARIO <- paste(SUBBASIN, SETUP, SC_FOLDER, sep="_"))
+        hru <- within(hru,  SCENARIO <- paste(SUBBASIN, SETUP, SC_FOLDER, sep="_"))
+
+        ##Saving results
+        if (row == 1){
+          df_rch <- rch
+          df_sub <- sub
+          df_hru <- hru
         } else {
-          message(paste0("OUTPUT files are missing for .rch, .sub or/and .hru in
-                       path or files are empty", scenario_path, " !!!"))
+          df_rch <- bind_rows(df_rch, rch)
+          df_sub <- bind_rows(df_sub, sub)
+          df_hru <- bind_rows(df_hru, hru)
         }
+      } else {
+        message(paste0("OUTPUT files are missing for .rch, .sub or/and .hru in
+                     path or files are empty", scenario_path, " !!!"))
       }
     }
     print(paste("Finished extracting", subbasin_name, setup_name, ".",
@@ -122,3 +112,5 @@ extract_watersheds_output <- function(watersheds_folder_path, climate_scenarios,
   ##Returning list with 3 dataframes.
   return(list(rch = df_rch, sub = df_sub, hru = df_hru))
 }
+
+

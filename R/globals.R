@@ -1,2 +1,3 @@
-utils::globalVariables(c("MON", "Day", "Month", "A", "M", "X4", "CLIMATE",
-                         "MEASURE", "SETUP", "SUBBASIN", "Setup_name", "Subbasin", "basins"))
+utils::globalVariables(c("MON", "Day", "Month", "A", "M", "X4", "SC_FOLDER", "SETUP",
+                         "scenarios","SUBBASIN", "Setup_name", "Subbasin", "basins",
+                         "PARAMETER", "SCENARIO", "DIFFERENCE"))

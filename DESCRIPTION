@@ -21,7 +21,10 @@ Imports:
     tidyr (>= 0.8.0),
     tidyselect,
     tidyverse, 
-    sf
+    sf,
+    scales,
+    ggplot2,
+    stringr
 URL: https://github.com/biopsichas/swattools
 BugReports: https://github.com/biopsichas/swattools/issues
 Roxygen: list(markdown = TRUE)
