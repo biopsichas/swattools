@@ -4,7 +4,7 @@
 \alias{get_diff_from_baseline}
 \title{Function to get scenario difference from baseline values}
 \usage{
-get_diff_from_baseline(df, baseline_period = NA)
+get_diff_from_baseline(df, baseline_period = NULL)
 }
 \arguments{
 \item{df}{Data.frame of imported output.*** SWAT file with extract_watersheds_output function}

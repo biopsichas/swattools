@@ -47,7 +47,7 @@ get_period_means <- function(df, starting_year, ending_year){
 #'
 #' @param df Data.frame of imported output.*** SWAT file
 #' @return Data.frame of summed up data over setups
-#' @importFrom dplyr select %>% group_by top_n mutate_at mutate_if ends_with vars funs distinct
+#' @importFrom dplyr select %>% group_by top_n mutate_at mutate across ends_with vars funs distinct
 #' @export
 
 collapse_results_to_setups <- function(df){

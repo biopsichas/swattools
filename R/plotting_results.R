@@ -25,18 +25,18 @@ plot_scenarios_heatmap <- function(df, filter_scenario_by_vector = NA){
     }
   }
   df <- df %>%
-    select(SCENARIO, matches("cms$|kg$|tons$|mm$|ha$")) %>%
+    select(SCENARIO, matches("cms$|kg$|tons$|mm$|ha$|cms/y$|t/y$")) %>%
     gather(PARAMETER, DIFFERENCE, -SCENARIO)
 
   heatmap_plot <- ggplot(df, aes(x = PARAMETER, y = SCENARIO)) +
     geom_tile(aes(fill= DIFFERENCE)) +
     geom_text(aes(label = round(DIFFERENCE, 0))) +
     scale_fill_gradientn(colours = c("darkslateblue", "deepskyblue1", "darkolivegreen1",
-                                   "grey95",
-                                   "gold", "darkorange", "red"),
+                                     "grey95",
+                                     "gold", "darkorange", "red"),
                          values = rescale(c(-100, -50, -25,
-                                                  0,
-                                                  25, 50, 100)),
+                                            0,
+                                            25, 50, 100)),
                          breaks = seq(-100, 100, 20),
                          limits = c(-100, 100),
                          guide = "colorbar") +

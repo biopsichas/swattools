@@ -11,12 +11,12 @@
 #' @importFrom dplyr arrange bind_rows %>%
 #' @export
 
-get_diff_from_baseline <- function(df, baseline_period = NA){
+get_diff_from_baseline <- function(df, baseline_period = NULL){
 
   ##Getting all different outputs available and separating them into baselines
   ## scenarios and non baseline scenarios
   scenarios <- unique(df$SCENARIO)
-  if (!is.na(baseline_period)){
+  if (length(baseline_period) != 0){
     base <- paste0("_baseline_", baseline_period[1], "_", baseline_period[2], "$")
     baseline_scenarios <- scenarios[grep(base, scenarios)]
     measures_scenarios <- scenarios[-grep(base, scenarios)]
@@ -26,13 +26,13 @@ get_diff_from_baseline <- function(df, baseline_period = NA){
   }
 
   ##Identifying inputs to the function
-  if ("RCH" %in% names(df)){
-    drops_columns <- c("date", "RCH", "AREAkm2", "SUBBASIN", "SETUP", "SC_FOLDER", "SCENARIO")
-  } else if ("LULC" %in% names(df)){
+  if ("LULC" %in% names(df)){
     drops_columns <- c("date", "LULC", "HRU", "GIS", "SUB", "AREAkm2", "SUBBASIN", "SETUP", "SC_FOLDER", "SCENARIO")
+  } else {
+    drops_columns <- c("date", "RCH", "AREAkm2", "SUBBASIN", "SETUP", "SC_FOLDER", "SCENARIO")
   }
 
-  if (!is.na(baseline_period)){
+  if (length(baseline_period) != 0){
     drops_columns <- c(drops_columns, "PERIOD")
   } else if ("RCH" %in% names(df)){
     df <- df %>%
@@ -46,7 +46,7 @@ get_diff_from_baseline <- function(df, baseline_period = NA){
   #difference with baseline.
   df_save <- NULL
   for (measures_scenario in measures_scenarios){
-    if (!is.na(baseline_period)){
+    if (length(baseline_period) != 0){
       baseline_scenario <- paste0(gsub(".measure_.*","\\1", measures_scenario),
                                   "_baseline_", baseline_period[1], "_", baseline_period[2])
     } else {
@@ -70,5 +70,7 @@ get_diff_from_baseline <- function(df, baseline_period = NA){
       message(paste(baseline_scenario, "is not available!!!"))
     }
   }
+  names(df_save) <- gsub(x = names(df_save), pattern = "\\.", replacement = "/")
   return(df_save)
 }
+
