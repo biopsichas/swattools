@@ -72,12 +72,12 @@ collapse_results_to_setups <- function(df){
     if ("date" %in% names(df)){
       df <- df %>%
         group_by(SCENARIO, date) %>%
-        mutate_if(is.numeric, sum) %>%
+        mutate(across(is.numeric, sum)) %>%
         distinct()
     } else if ("PERIOD" %in% names(df)){
       df <- df %>%
         group_by(SCENARIO, PERIOD) %>%
-        mutate_if(is.numeric, sum) %>%
+        mutate(across(is.numeric, sum)) %>%
         distinct()
     }
   } else {
@@ -101,16 +101,17 @@ collapse_results_to_setups <- function(df){
 get_averaged_collapsed_data <- function(df, period_list){
   df_save <- NULL
   for (period in period_list){
-    df <- get_period_means(df, period[1], period[2])
-    df <- collapse_results_to_setups(df)
+    df_averaged <- get_period_means(df, period[1], period[2])
+    df_collapsed <- collapse_results_to_setups(df_averaged)
     if(length(df_save) != 0){
-      df_save <- bind_rows(df_save, df)
+      df_save <- bind_rows(df_save, df_collapsed)
     } else {
-      df_save <- df
+      df_save <- df_collapsed
     }
   }
   df_save <- df_save %>%
     arrange(SCENARIO)
   return(df_save)
 }
+
 
