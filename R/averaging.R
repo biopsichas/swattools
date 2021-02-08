@@ -8,7 +8,7 @@
 #' @param starting_year Number representing starting year of period (example 2000)
 #' @param ending_year Number representing ending year of period (example 2019)
 #' @return Data.frame of averaged data over period
-#' @importFrom dplyr select %>% group_by summarise_all mutate funs
+#' @importFrom dplyr filter select %>% group_by summarise_all mutate
 #' @export
 
 get_period_means <- function(df, starting_year, ending_year){
@@ -28,7 +28,7 @@ get_period_means <- function(df, starting_year, ending_year){
   } else if ("LULC" %in% names(df)){
     df <- df %>%
       group_by(SUBBASIN, SETUP, SC_FOLDER, SCENARIO, LULC, HRU, GIS, SUB) %>%
-      summarise_all(funs(mean)) %>%
+      summarise_all(list(~mean)) %>%
       mutate(PERIOD = paste0(as.character(starting_year), "_",
                              as.character(ending_year)))
   } else{
@@ -47,7 +47,7 @@ get_period_means <- function(df, starting_year, ending_year){
 #'
 #' @param df Data.frame of imported output.*** SWAT file
 #' @return Data.frame of summed up data over setups
-#' @importFrom dplyr select %>% group_by top_n mutate_at mutate_if ends_with vars funs
+#' @importFrom dplyr select %>% group_by top_n mutate_at mutate_if ends_with vars funs distinct
 #' @export
 
 collapse_results_to_setups <- function(df){
@@ -72,11 +72,13 @@ collapse_results_to_setups <- function(df){
     if ("date" %in% names(df)){
       df <- df %>%
         group_by(SCENARIO, date) %>%
-        mutate_if(is.numeric, sum)
+        mutate_if(is.numeric, sum) %>%
+        distinct()
     } else if ("PERIOD" %in% names(df)){
       df <- df %>%
         group_by(SCENARIO, PERIOD) %>%
-        mutate_if(is.numeric, sum)
+        mutate_if(is.numeric, sum) %>%
+        distinct()
     }
   } else {
     stop("Dataframe doesn't hold data from 'rch' or 'sub' output files!!!")
