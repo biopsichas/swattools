@@ -114,4 +114,46 @@ get_averaged_collapsed_data <- function(df, period_list){
   return(df_save)
 }
 
+#' Function to get sums of 'sub' data over scenarios
+#'
+#'This function averages output data by periods and collapse it by setups,
+#'and sums it over scenarios for all setups.
+#'
+#' @param df Data.frame of imported output.*** SWAT file
+#' @param period_list List of periods used in averaging data  (example
+#' period_list <- list (base = c(2000, 2019), mid = c(2040, 2059), end = c(2080, 2099)))
+#' @return Data.frame of summed up over scenarios.
+#' @importFrom dplyr filter ungroup select_if mutate across distinct select
+#' @importFrom tidyselect everything
+#' @export
+
+get_scenario_sub_sums <- function(df, period_list){
+  ##Getting averaged and collapsed data to the periods and setups
+  df <- get_averaged_collapsed_data(df, period_list)
+  SC_FOLDER_names <- unique(df$SC_FOLDER)
+  PERIOD_names <- unique(df$PERIOD)
+  ##Providing vector of scenarios
+  scenarios <- as.vector(outer(SC_FOLDER_names, PERIOD_names, paste, sep="_"))
+  df_result <- NULL
+  for (scenario in scenarios){
+    ##Identifying scenario and summing up its values.
+    df_selected <- df %>%
+      filter(grepl(scenario, SCENARIO)) %>%
+      ungroup() %>%
+      select_if(~is.numeric(.x)) %>%
+      mutate(across(is.numeric, sum)) %>%
+      distinct() %>%
+      mutate(SCENARIO = scenario)
+    ##Saving result
+    if (length(df_result) != 0){
+      df_result <- bind_rows(df_result, df_selected)
+    } else {
+      df_result <- df_selected
+    }
+  }
+  df_result <- df_result %>%
+    select(SCENARIO, AREAkm2, everything())
+
+  return(df_result)
+}
 

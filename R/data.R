@@ -424,3 +424,18 @@
 #'
 "basins"
 
+#'Data about application areas of selected measures
+#'
+#'Data showing size of areas where measures have been applied in each small catchment.
+#'
+#' @format A data.frame with 5 variables:
+#' \describe{
+#' \item{Subbasin}{Subbasins aggregating SWAT setups.}
+#' \item{Setup_name}{SWAT setup name.}
+#' \item{RCH}{Reach number correcting to reach or subbasin numbers in SWAT ouput files.}
+#' \item{Measure}{Implemented measure code.}
+#' \item{AREAkm2Measure}{Area in km2 where measures have been implemented.}
+#' }
+#'
+"app_areas"
+

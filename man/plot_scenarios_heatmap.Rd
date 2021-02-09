@@ -7,15 +7,15 @@
 plot_scenarios_heatmap(df, filter_scenario_by_vector = NA)
 }
 \arguments{
-\item{df}{Data.frame of data extracted from output.rch and output.sub files. Beside other columns
-has to have SCENARIO column, which join all information about scenario.}
+\item{df}{Data.frame of data extracted from output.rch and output.sub files and processed with get_diff_from_baseline function.
+Beside other columns has to have SCENARIO column, which join all information about scenario.}
 
 \item{filter_scenario_by_vector}{Vector, which allows to filter scenarios. Filtering could be done by AND providing
 vector members seperated by comma, or by OR seperating one vector member in many '|'. For example
 c("rcp45", "2080_2099", "Minija|Merkys|Dauguva") this vector filter by AND and by OR.}
 }
 \value{
-Data.frame imported from SWAT output files
+heatmap plot
 }
 \description{
 This function allows plotting heatmaps for the scenario results extracted and averaged

@@ -4,12 +4,15 @@
 \alias{get_diff_from_baseline}
 \title{Function to get scenario difference from baseline values}
 \usage{
-get_diff_from_baseline(df, baseline_period = NULL)
+get_diff_from_baseline(df, baseline_period = NULL, type_of_diff = "r")
 }
 \arguments{
 \item{df}{Data.frame of imported output.*** SWAT file with extract_watersheds_output function}
 
-\item{baseline_period}{Vector of two values. First with year of beginning
+\item{baseline_period}{Vector of two values. First with year of beginning}
+
+\item{type_of_diff}{String from one letter. 'r' stands for relative difference in percentages
+and 'a' for absolute in absolute values.
 of baseline period and second with end of it. Those two values should have
 been used in naming scenario folder. Example (c("2000", "2019"))}
 }

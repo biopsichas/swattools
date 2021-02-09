@@ -5,13 +5,15 @@
 #'
 #' @param df Data.frame of imported output.*** SWAT file with extract_watersheds_output function
 #' @param baseline_period Vector of two values. First with year of beginning
+#' @param type_of_diff String from one letter. 'r' stands for relative difference in percentages
+#' and 'a' for absolute in absolute values.
 #' of baseline period and second with end of it. Those two values should have
 #' been used in naming scenario folder. Example (c("2000", "2019"))
 #' @return Data.frame with all numeric columns recalculated as percentage from baseline.
 #' @importFrom dplyr arrange bind_rows %>%
 #' @export
 
-get_diff_from_baseline <- function(df, baseline_period = NULL){
+get_diff_from_baseline <- function(df, baseline_period = NULL, type_of_diff = "r"){
 
   ##Getting all different outputs available and separating them into baselines
   ## scenarios and non baseline scenarios
@@ -53,14 +55,24 @@ get_diff_from_baseline <- function(df, baseline_period = NULL){
       baseline_scenario <- paste0(gsub(".measure_.*","\\1", measures_scenario),
                                   "_baseline")
     }
-    ##Calculating percantages
+    ##Calculating percentages
     if (baseline_scenario %in% df$SCENARIO){
       df_ms <- df[df$SCENARIO == measures_scenario,]
       df_bs <- df[df$SCENARIO == baseline_scenario,]
-      df_result <- data.frame(df_ms[,(names(df_ms) %in% drops_columns)],
-                              round(100 * ((df_ms[,!(names(df_ms) %in% drops_columns)] -
-                                              df_bs[,!(names(df_bs) %in% drops_columns)]) /
-                                             df_bs[,!(names(df_bs) %in% drops_columns)]),2))
+      ##Setting if we calculate relative of absolute difference
+      if (type_of_diff == "r"){
+        df_result <- data.frame(df_ms[,(names(df_ms) %in% drops_columns)],
+                                round(100 * ((df_ms[,!(names(df_ms) %in% drops_columns)] -
+                                                df_bs[,!(names(df_bs) %in% drops_columns)]) /
+                                               df_bs[,!(names(df_bs) %in% drops_columns)]),2))
+      } else if(type_of_diff == "a"){
+        df_result <- data.frame(df_ms[,(names(df_ms) %in% drops_columns)],
+                                (df_ms[,!(names(df_ms) %in% drops_columns)] -
+                                   df_bs[,!(names(df_bs) %in% drops_columns)]))
+      } else {
+        stop("Type of difference is not deffined in the right way. It should be either 'r' for relative or 'a'
+              for absolute difference between measure and baseline scenarios.!!!")
+      }
       if(length(df_save) != 0){
         df_save <- bind_rows(df_save, df_result)
       } else {
@@ -70,7 +82,9 @@ get_diff_from_baseline <- function(df, baseline_period = NULL){
       message(paste(baseline_scenario, "is not available!!!"))
     }
   }
-  names(df_save) <- gsub(x = names(df_save), pattern = "\\.", replacement = "/")
+  ##Removing any dots in column names if they are there.
+  if(any(grepl(".", colnames(df_save)))){
+    names(df_save) <- gsub(x = names(df_save), pattern = "\\.", replacement = "/")
+  }
   return(df_save)
 }
-
