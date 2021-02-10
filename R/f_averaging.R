@@ -50,7 +50,7 @@ get_period_means <- function(df, starting_year, ending_year){
 #' @importFrom dplyr select %>% group_by top_n mutate_at mutate across ends_with vars funs distinct
 #' @export
 
-collapse_results_to_setups <- function(df){
+get_collapsed_results_to_setups <- function(df){
 
   ##Identifying inputs to the function
   if ("FLOW_OUTcms" %in% names(df)){
@@ -102,7 +102,7 @@ get_averaged_collapsed_data <- function(df, period_list){
   df_save <- NULL
   for (period in period_list){
     df_averaged <- get_period_means(df, period[1], period[2])
-    df_collapsed <- collapse_results_to_setups(df_averaged)
+    df_collapsed <- get_collapsed_results_to_setups(df_averaged)
     if(length(df_save) != 0){
       df_save <- bind_rows(df_save, df_collapsed)
     } else {
@@ -157,3 +157,125 @@ get_scenario_sub_sums <- function(df, period_list){
   return(df_result)
 }
 
+
+#' Function to get effectiveness of measures over scenarios in kg per ha of implemented measures
+#'
+#'This function allows comparing scenarios taking into account areas of implemented measures.
+#'Output of function is how much each parameters is changed my implementation of 1 ha of measure
+#'in scenario for reach or setup or whole country.
+#'
+#' @param df Data.frame of imported output.*** SWAT file processed with
+#'get_diff_from_baseline function by option of 'a' (absolute difference).
+#' @return Data.frame of results showing effectiveness of implementing 1 ha of measure.
+#' @importFrom dplyr group_by select summarise_all rename mutate left_join mutate_at vars
+#' @importFrom tidyr separate
+#' @export
+#' @examples
+#' ## result <- get_measure_effectiveness_kgha(df)
+
+get_measure_effectiveness_kgha <- function(df){
+  ##Identifying if data in df are averaged over setups if not.
+  if ("RCH" %in% names(df)){
+    m_area <- app_areas %>%
+      group_by(Subbasin, Setup_name, Measure, RCH)
+  } else {
+    m_area <- app_areas %>%
+      select(-RCH) %>%
+      group_by(Subbasin, Setup_name, Measure)
+  }
+  ##Preparing application areas of measures data
+  m_area <- m_area %>%
+    summarise_all(sum) %>%
+    rename(m_AREAkm2 = AREAkm2)
+
+  ##Adding two missing columns
+  df <- df %>%
+    separate(SC_FOLDER, into = c("CLIMATE", "MEASURE"), sep = "_mea") %>%
+    mutate(MEASURE = paste0("mea", MEASURE))
+
+  ##Adding application arreas of measures data
+  if ("RCH" %in% names(df)){
+    df <- df %>%
+      left_join(m_area, by = c("SUBBASIN" = "Subbasin", "SETUP" = "Setup_name", "MEASURE" = "Measure", "RCH"))
+  } else {
+    df <- df %>%
+      left_join(m_area, by = c("SUBBASIN" = "Subbasin", "SETUP" = "Setup_name", "MEASURE" = "Measure"))
+  }
+
+  ##Columns not to use in numerical operations.
+  drops_columns <- c("SUBBASIN", "SETUP", "SC_FOLDER", "CLIMATE", "MEASURE", "SCENARIO", "AREAkm2",
+                     "PERIOD", "RCH", "date", "LULC", "HRU", "GIS", "SUB", "m_AREAkm2")
+
+  ##Calculating how much is reduced or increased of particular parameter by implementing one ha of measures.
+  df <- data.frame(df[,(names(df) %in% drops_columns)],
+                   round((df[,!(names(df) %in% drops_columns)] / df[,"m_AREAkm2"]) * 10, 1))
+
+  ##Remove dot, which might appear from division.
+  if(any(grepl(".", colnames(df)))){
+    names(df) <- gsub(x = names(df), pattern = "\\.", replacement = "/")
+  }
+
+  ##Renaming columns.
+  df <- df %>%
+    mutate_at(vars(matches("cms/y$")),  list(~./1000))
+  names(df) <- gsub(x = names(df), pattern = "cms/y", replacement = "cms/ha")
+  names(df) <- gsub(x = names(df), pattern = "t/y", replacement = "kg/ha")
+
+  ##Resetting Inf, NAs values to 0.
+  is.na(df)<-sapply(df, is.infinite)
+  df[is.na(df)]<-0
+
+  ##Return
+  return(df)
+}
+
+#' Function to get effectiveness of measures over scenarios in euros per 1kg or 1cms of parameters for implemented measures
+#'
+#'This function allows comparing scenarios taking into account areas and costs of implemented measures.
+#'Output of function is how much  it cost to decrease (negative values) or increase (positive values)
+#'each in parameters by one unit (either 1 kg or 1 cubic meter of water) in scenario for reach or
+#'setup or whole country.
+#'
+#' @param df Data.frame of imported output.*** SWAT file processed with
+#'get_diff_from_baseline function by option of 'a' (absolute difference).
+#' @param cost_list A list of measure names and costs. Example, cost_list <- list(measure_30 = 248,
+#' measure_33 = 4, measure_34 = 2, measure_37 = 1, measure_39 = 22, measure_40 = 58)
+#' @return Data.frame of results showing cost-effectiveness of implementing measure in euros
+#' per one unit (1 kg or 1 cms) of reduction (negative values) or increase (positive values).
+#' @importFrom dplyr left_join mutate_at vars
+#' @importFrom tidyr gather
+#' @export
+#' @examples
+#' ## result <- get_costs_per_reduction_1unit(df, cost_list)
+
+get_costs_per_reduction_1unit <- function(df, cost_list){
+  df_mcost <- data.frame(t(sapply(cost_list,c))) %>%
+    gather("MEASURE", "COSTe_ha")
+  df <- get_measure_effectiveness_kgha(df) %>%
+    left_join(df_mcost, by = "MEASURE")
+
+  ##Columns not to use in numerical operations.
+  drops_columns <- c("SUBBASIN", "SETUP", "SC_FOLDER", "CLIMATE", "MEASURE", "SCENARIO", "AREAkm2",
+                     "PERIOD", "RCH", "date", "LULC", "HRU", "GIS", "SUB", "m_AREAkm2", "COSTe_ha")
+
+  ##Calculating how much is reduced or increased of particular parameter by implementing one ha of measures.
+  df <- data.frame(df[,(names(df) %in% drops_columns)],
+                   round((df[,"COSTe_ha"] / df[,!(names(df) %in% drops_columns)]), 3))
+
+  ##Remove dot, which might appear from division.
+  if(any(grepl(".", colnames(df)))){
+    names(df) <- gsub(x = names(df), pattern = "\\.", replacement = "/")
+  }
+
+  ##Renaming columns.
+  df <- df %>%
+    mutate_at(vars(matches("cms/y$")),  list(~./1000))
+  names(df) <- gsub(x = names(df), pattern = "kg/ha", replacement = "e/1kg")
+  names(df) <- gsub(x = names(df), pattern = "cms/ha", replacement = "e/1cms")
+
+  ##Resetting Inf, NAs values to 0.
+  is.na(df)<-sapply(df, is.infinite)
+  df[is.na(df)]<-0
+
+  return(df)
+}
