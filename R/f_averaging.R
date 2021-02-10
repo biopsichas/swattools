@@ -279,3 +279,32 @@ get_costs_per_reduction_1unit <- function(df, cost_list){
 
   return(df)
 }
+
+#' Function to sum parameters to NT, PT, ST and Q
+#'
+#'This function sums output data to main parameters. NT - total nitrogen,
+#'PT - total phosphorus, ST - total sediment and Q - water discharge.
+#'
+#' @param df Data.frame of imported output.*** SWAT file
+#' @return Data.frame of summed parameters
+#' @export
+
+get_main_parameters <- function(df){
+  ##Columns not to use in numerical operations.
+  drops_columns <- c("SUBBASIN", "SETUP", "SC_FOLDER", "CLIMATE", "MEASURE", "SCENARIO", "AREAkm2",
+                     "PERIOD", "RCH", "date", "LULC", "HRU", "GIS", "SUB", "m_AREAkm2", "COSTe_ha")
+  ##Calculating main parameters
+  df <- data.frame(df[,(names(df) %in% drops_columns)],
+                   NT = (df[,grep("^ORGN", colnames(df))] +
+                           df[,grep("^NSURQ", colnames(df))] +
+                           df[,grep("^LATNO3", colnames(df))] +
+                           df[,grep("^GWNO3", colnames(df))] +
+                           df[,grep("^TNO3", colnames(df))]),
+                   PT = (df[,grep("^ORGP", colnames(df))] +
+                           df[,grep("^SOLP", colnames(df))] +
+                           df[,grep("^SEDP", colnames(df))]),
+                   ST = df[,grep("^SYLD", colnames(df))],
+                   Q = df[,grep("^WYLD", colnames(df))])
+  return(df)
+}
+
