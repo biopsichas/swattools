@@ -307,4 +307,3 @@ get_main_parameters <- function(df){
                    Q = df[,grep("^WYLD", colnames(df))])
   return(df)
 }
-

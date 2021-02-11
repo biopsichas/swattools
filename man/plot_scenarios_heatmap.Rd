@@ -21,3 +21,6 @@ heatmap plot
 This function allows plotting heatmaps for the scenario results extracted and averaged
 from output.rch and output.sub SWAT output files.
 }
+\examples{
+##plot_scenarios_heatmap(df, c("measure_30", "rcp45", "2080_2099", "Daugyvene"))
+}
