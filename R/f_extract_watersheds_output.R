@@ -19,7 +19,7 @@
 #' @importFrom dplyr bind_cols bind_rows arrange %>%
 #' @export
 #' @examples
-#' r <- extract_watersheds_output("/Watersheds", c("C1", "C2"), 2, "1997-01-01", "2099-12-31")
+#' ##extract_watersheds_output(path, scenarios, 2, "1997-01-01", "2099-12-31", c("sub"), TRUE)
 
 extract_watersheds_output <- function(watersheds_folder_path, scenarios, output_type, starting_date, ending_date,
                                       output_files = c("sub", "rch", "hru"), save_results_to_files = FALSE){
@@ -28,9 +28,9 @@ extract_watersheds_output <- function(watersheds_folder_path, scenarios, output_
   ####              Loop to extract modeling data              ####
   #################################################################
   ##Setting up dataframes
-  df_rch <- NA
-  df_sub <- NA
-  df_hru <- NA
+  df_rch <- NULL
+  df_sub <- NULL
+  df_hru <- NULL
   ##Creating dataframe for looping over setups in modeling results
   setups_to_loop <- basins %>%
     st_set_geometry(NULL) %>%
@@ -82,9 +82,9 @@ extract_watersheds_output <- function(watersheds_folder_path, scenarios, output_
           message(paste0("OUTPUT files are missing for . ", f, " or files are empty", scenario_path, " !!!"))
         }
       }
-      print(paste("Finished extracting", subbasin_name, setup_name, ".",
-                  round(row/nrow(setups_to_loop)*100, 1), "% already done."))
     }
+    print(paste("Finished extracting", subbasin_name, setup_name, ".",
+               round(row/nrow(setups_to_loop)*100, 1), "% already done."))
   }
   ##Saving data to *.rda files
   if (save_results_to_files == TRUE){

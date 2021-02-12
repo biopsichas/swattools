@@ -41,5 +41,5 @@ This function allows reading in all output.rch, output.sub, output.hru files gen
 in Lithuanian EPA model, which was applied for different climate and measures scenarios.
 }
 \examples{
-r <- extract_watersheds_output("/Watersheds", c("C1", "C2"), 2, "1997-01-01", "2099-12-31")
+##extract_watersheds_output(path, scenarios, 2, "1997-01-01", "2099-12-31", c("sub"), TRUE)
 }
