@@ -31,6 +31,7 @@ extract_watersheds_output <- function(watersheds_folder_path, scenarios, output_
   df_rch <- NULL
   df_sub <- NULL
   df_hru <- NULL
+  c <- 0
   ##Creating dataframe for looping over setups in modeling results
   setups_to_loop <- basins %>%
     st_set_geometry(NULL) %>%
@@ -61,15 +62,7 @@ extract_watersheds_output <- function(watersheds_folder_path, scenarios, output_
           ##measure used.
           f_df <- within(f_df,  SCENARIO <- paste(SUBBASIN, SETUP, SC_FOLDER, sep="_"))
           ##Saving results
-          if (row == 1){
-            if (f == "rch"){
-              df_rch <- f_df
-            } else if (f == "sub"){
-              df_sub <- f_df
-            } else if (f == "hru"){
-              df_hru <- f_df
-            }
-          } else {
+          if (c != 0){
             if (f == "rch"){
               df_rch <- bind_rows(df_rch, f_df)
             } else if (f == "sub"){
@@ -77,6 +70,15 @@ extract_watersheds_output <- function(watersheds_folder_path, scenarios, output_
             } else if (f == "hru"){
               df_hru <- bind_rows(df_hru, f_df)
             }
+          } else {
+            if (f == "rch"){
+              df_rch <- f_df
+            } else if (f == "sub"){
+              df_sub <- f_df
+            } else if (f == "hru"){
+              df_hru <- f_df
+            }
+            c <- 1
           }
         } else {
           message(paste0("OUTPUT files are missing for . ", f, " or files are empty", scenario_path, " !!!"))
