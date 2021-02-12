@@ -11,6 +11,7 @@
 #' @param output_type Number the same as in IPRINT (0 - Monthly, 1 - Daily, 2 - Year)
 #' @param starting_date Sting with time series starting date (example "1997-01-01")
 #' @param ending_date Sting with time series ending date (example "2019-12-31")
+#' @param output_files Vector of files endings for output files to extract.
 #' @param save_results_to_files Logical value with TRUE or FALSE values. If TRUE  results will be saved to hru.rda,
 #' rch.rda, sub.rda files in working directory.
 #' @return List with three data.frames: rch, sub and hru for data extracted from different output files.
@@ -21,7 +22,7 @@
 #' r <- extract_watersheds_output("/Watersheds", c("C1", "C2"), 2, "1997-01-01", "2099-12-31")
 
 extract_watersheds_output <- function(watersheds_folder_path, scenarios, output_type, starting_date, ending_date,
-                                      save_results_to_files = FALSE){
+                                      output_files = c("sub", "rch", "hru"), save_results_to_files = FALSE){
 
   #################################################################
   ####              Loop to extract modeling data              ####
@@ -45,70 +46,62 @@ extract_watersheds_output <- function(watersheds_folder_path, scenarios, output_
       ##Forming path to modeling result folder
       scenario_path <- paste0(watersheds_folder_path, "/", subbasin_name,
                               "/", setup_name, "/SWAT/", scenario)
-      rch_path <- paste0(scenario_path, "/output.rch")
-      sub_path <- paste0(scenario_path, "/output.sub")
-      hru_path <- paste0(scenario_path, "/output.hru")
+      for (f in output_files){
+        f_path <- paste0(scenario_path, "/output.", f)
 
-      ##Checking if files exists and they are not empty
-      if ((file.exists(rch_path) &
-          file.exists(sub_path) &
-          file.exists(hru_path)) &
-          (file.info(rch_path)$size > 2000 &
-           file.info(sub_path)$size > 2000 &
-           file.info(hru_path)$size > 2000)) {
-        ##Extracting and cleaning data from SWAT output.*** files
-        ##Saving output.rch file
-        rch <- clean_swat_output(read_swat_output(scenario_path, output_type, "rch",
-                                                  starting_date, ending_date))
-        rch <- bind_cols(rch, SUBBASIN = subbasin_name, SETUP = setup_name, SC_FOLDER = scenario)
-        ##Saving output.sub file
-        sub <- clean_swat_output(read_swat_output(scenario_path, output_type, "sub",
-                                                  starting_date, ending_date))
-        sub <- bind_cols(sub, SUBBASIN = subbasin_name, SETUP = setup_name, SC_FOLDER = scenario)
-        ##Saving output.hru file
-        hru <- clean_swat_output(read_swat_output(scenario_path, output_type, "hru",
-                                                  starting_date, ending_date))
-        hru <- bind_cols(hru, SUBBASIN = subbasin_name, SETUP = setup_name, SC_FOLDER = scenario)
+        ##Checking if files exists and they are not empty
+        if ((file.exists(f_path) & file.info(f_path)$size > 2000)) {
 
-        ##Saving to a single dataframe each of output files.
-        ##Add column for the scenario, which shows basins, setup, climate data and
-        ##measure used.
-
-        rch <- within(rch,  SCENARIO <- paste(SUBBASIN, SETUP, SC_FOLDER, sep="_"))
-        sub <- within(sub,  SCENARIO <- paste(SUBBASIN, SETUP, SC_FOLDER, sep="_"))
-        hru <- within(hru,  SCENARIO <- paste(SUBBASIN, SETUP, SC_FOLDER, sep="_"))
-
-        ##Saving results
-        if (row == 1){
-          df_rch <- rch
-          df_sub <- sub
-          df_hru <- hru
+          ##Extracting and cleaning data from SWAT output.*** files
+          f_df <- clean_swat_output(read_swat_output(scenario_path, output_type, f,
+                                                    starting_date, ending_date))
+          f_df  <- bind_cols(f_df , SUBBASIN = subbasin_name, SETUP = setup_name, SC_FOLDER = scenario)
+          ##Saving to a single dataframe each of output files.
+          ##Add column for the scenario, which shows basins, setup, climate data and
+          ##measure used.
+          f_df <- within(f_df,  SCENARIO <- paste(SUBBASIN, SETUP, SC_FOLDER, sep="_"))
+          ##Saving results
+          if (row == 1){
+            if (f == "rch"){
+              df_rch <- f_df
+            } else if (f == "sub"){
+              df_sub <- f_df
+            } else if (f == "hru"){
+              df_hru <- f_df
+            }
+          } else {
+            if (f == "rch"){
+              df_rch <- bind_rows(df_rch, f_df)
+            } else if (f == "sub"){
+              df_sub <- bind_rows(df_sub, f_df)
+            } else if (f == "hru"){
+              df_hru <- bind_rows(df_hru, f_df)
+            }
+          }
         } else {
-          df_rch <- bind_rows(df_rch, rch)
-          df_sub <- bind_rows(df_sub, sub)
-          df_hru <- bind_rows(df_hru, hru)
+          message(paste0("OUTPUT files are missing for . ", f, " or files are empty", scenario_path, " !!!"))
         }
-      } else {
-        message(paste0("OUTPUT files are missing for .rch, .sub or/and .hru in
-                     path or files are empty", scenario_path, " !!!"))
       }
+      print(paste("Finished extracting", subbasin_name, setup_name, ".",
+                  round(row/nrow(setups_to_loop)*100, 1), "% already done."))
     }
-    print(paste("Finished extracting", subbasin_name, setup_name, ".",
-                round(row/nrow(setups_to_loop)*100, 1), "% already done."))
   }
-
   ##Saving data to *.rda files
   if (save_results_to_files == TRUE){
     ##Saving results to files
     print("Results are being saved into .rda files.")
-    save(df_rch, file = "rch.rda")
-    save(df_sub, file = "sub.rda")
-    save(df_hru, file = "hru.rda")
-    print("Finished saving results into .rda files. rch.rda, sub.rda and hru.rda files are in working directory.")
+    if (length(df_rch) != 0){
+      save(df_rch, file = "rch.rda")
+    }
+    if (length(df_sub) != 0){
+      save(df_sub, file = "sub.rda")
+    }
+    if (length(df_sub) != 0){
+      save(df_hru, file = "hru.rda")
+    }
+    print("Finished saving results into .rda files. files are in working directory.")
   }
-
   print ("Extracting from Watersheds folder is finished!!!")
-
   ##Returning list with 3 dataframes.
   return(list(rch = df_rch, sub = df_sub, hru = df_hru))
 }

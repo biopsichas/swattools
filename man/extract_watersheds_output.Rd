@@ -10,6 +10,7 @@ extract_watersheds_output(
   output_type,
   starting_date,
   ending_date,
+  output_files = c("sub", "rch", "hru"),
   save_results_to_files = FALSE
 )
 }
@@ -26,6 +27,8 @@ An example, scenarios = c("HIRHAM5_rcp45_measure_30'", "HIRHAM5_rcp45_measure_31
 \item{starting_date}{Sting with time series starting date (example "1997-01-01")}
 
 \item{ending_date}{Sting with time series ending date (example "2019-12-31")}
+
+\item{output_files}{Vector of files endings for output files to extract.}
 
 \item{save_results_to_files}{Logical value with TRUE or FALSE values. If TRUE  results will be saved to hru.rda,
 rch.rda, sub.rda files in working directory.}
