@@ -6,14 +6,19 @@
 #' @param df Data.frame of imported output.*** SWAT file with extract_watersheds_output function
 #' @param baseline_period Vector of two values. First with year of beginning
 #' @param type_of_diff String from one letter. 'r' stands for relative difference in percentages
-#' and 'a' for absolute in absolute values.
+#' #' and 'a' for absolute in absolute values.
 #' of baseline period and second with end of it. Those two values should have
 #' been used in naming scenario folder. Example (c("2000", "2019"))
+#' @param type_of_baseline String from one letter. 'f' stands for fixed period difference and "c"
+#' for changing. It means "f" would calculate all the difference with one period (example 2000-2019) baseline
+#' and "c" with each period baselines (example 2000-2019, 2040-2059, 2080-2099)
 #' @return Data.frame with all numeric columns recalculated as percentage from baseline.
 #' @importFrom dplyr arrange bind_rows %>%
 #' @export
+#' @examples
+#' ##get_diff_from_baseline(df, NULL, "r", "c")
 
-get_diff_from_baseline <- function(df, baseline_period = NULL, type_of_diff = "r"){
+get_diff_from_baseline <- function(df, baseline_period = NULL, type_of_diff = "r", type_of_baseline = "f"){
 
   ##Getting all different outputs available and separating them into baselines
   ## scenarios and non baseline scenarios
@@ -48,12 +53,31 @@ get_diff_from_baseline <- function(df, baseline_period = NULL, type_of_diff = "r
   #difference with baseline.
   df_save <- NULL
   for (measures_scenario in measures_scenarios){
-    if (length(baseline_period) != 0){
-      baseline_scenario <- paste0(gsub(".measure_.*","\\1", measures_scenario),
-                                  "_baseline_", baseline_period[1], "_", baseline_period[2])
-    } else {
-      baseline_scenario <- paste0(gsub(".measure_.*","\\1", measures_scenario),
-                                  "_baseline")
+    if (type_of_baseline == "f"){
+      ##This is for measures scenarios
+      if (grepl("measure", measures_scenario)){
+        if (length(baseline_period) != 0){
+          baseline_scenario <- paste0(gsub(".measure_.*","\\1", measures_scenario),
+                                      "_baseline_", baseline_period[1], "_", baseline_period[2])
+        } else {
+          ##This part for scenarios without period averaging
+          baseline_scenario <- paste0(gsub(".measure_.*","\\1", measures_scenario),
+                                      "_baseline")
+        }
+        ##This part for baseline scenarios, but not in main baseline period
+      } else if (grepl("baseline", measures_scenario)){
+        if (length(baseline_period) != 0){
+          baseline_scenario <- paste0(gsub(".baseline_.*","\\1", measures_scenario),
+                                      "_baseline_", baseline_period[1], "_", baseline_period[2])
+        } else {
+          ##This part for scenarios without period averaging
+          baseline_scenario <- paste0(gsub(".baseline_.*","\\1", measures_scenario),
+                                      "_baseline")
+        }
+      }
+      ##Part for changing baseline periods
+    } else if(type_of_baseline == "c"){
+      baseline_scenario <- gsub("measure_[1-9][0-9]","baseline", measures_scenario)
     }
     ##Calculating percentages
     if (baseline_scenario %in% df$SCENARIO){

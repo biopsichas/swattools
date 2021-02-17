@@ -60,7 +60,7 @@ plot_scenarios_heatmap <- function(df, filter_scenario_by_vector = NA){
 #' c("measure_40", "rcp45|rcp85", "2080_2099") this vector filter by AND and by OR.
 #' @return Bar plot
 #' @importFrom dplyr select filter rename %>%
-#' @importFrom ggplot2 ggplot geom_bar theme_gray aes
+#' @importFrom ggplot2 ggplot geom_bar theme_gray aes element_blank
 #' @export
 #' @examples
 #' ##plot_scenarios_bars(df, "NSURQt/y", c("measure_40", "rcp45|rcp85", "2080_2099"))
@@ -73,12 +73,16 @@ plot_scenarios_bars <- function(df, variable_name, filter_vec = c("_")){
   ##Filtering for vector
   for (vc in filter_vec){
     df <- df %>%
-      filter(grepl(vc, SCENARIO))
+      filter(grepl(vc, SCENARIO)) %>%
+      mutate(RCM = sub("_.*", "", SCENARIO))
   }
   ##Plotting
-  plot <- ggplot(df, aes(`Difference %`, SCENARIO)) +
+  plot <- ggplot(df, aes(`Difference %`, SCENARIO, fill = RCM)) +
     geom_bar(stat='identity') +
-    theme_gray()
+    theme_minimal()+
+    theme(axis.title.x = element_blank(),
+          axis.title.y = element_blank(),
+          axis.text.y = element_blank())
   return(plot)
 }
 
