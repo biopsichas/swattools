@@ -128,3 +128,150 @@ plot_scenario_result_map <- function(df, pattern, parameter){
   return(plot)
 }
 
+
+#' Function to plot grid of bars plots comparing scenarios of measures during different periods.
+#'
+#'This function put out modeling results on a grid of bars plots.
+#'This grid plot of plots allows to see effectiveness of measures during different time periods.
+#'Also allows to compare results of different RCM.
+#'
+#' @param df Data.frame of imported output.*** SWAT file. Data
+#' should be summed to one per scenario and period and showing relative change to
+#' baseline.
+#' @param param String showing, which parameters of df to put on a plot.
+#' @param rcp String showing, which climate change scenario to use (currently only "rcp45" or "rcp85" available)
+#' @importFrom cowplot plot_grid get_legend ggdraw draw_label
+#' @importFrom ggplot2 theme margin
+#' @return Grid of bar plots
+#' @export
+#' @examples
+#' ##plot_sc_grid_bars(df, "NT", "rcp45")
+
+plot_sc_grid_bars <- function(df, param, rcp){
+  ##Setting up bar plots for measures and periods
+  p1a <- plot_scenarios_bars(df, param, paste0(rcp ,"_measure_30_2000_2019"))
+  p1b <- plot_scenarios_bars(df, param, paste0(rcp ,"_measure_30_2040_2059"))
+  p1c <- plot_scenarios_bars(df, param, paste0(rcp ,"_measure_30_2080_2099"))
+  p2a <- plot_scenarios_bars(df, param, paste0(rcp ,"_measure_33_2000_2019"))
+  p2b <- plot_scenarios_bars(df, param, paste0(rcp ,"_measure_33_2040_2059"))
+  p2c <- plot_scenarios_bars(df, param, paste0(rcp ,"_measure_33_2080_2099"))
+  p3a <- plot_scenarios_bars(df, param, paste0(rcp ,"_measure_37_2000_2019"))
+  p3b <- plot_scenarios_bars(df, param, paste0(rcp ,"_measure_37_2040_2059"))
+  p3c <- plot_scenarios_bars(df, param, paste0(rcp ,"_measure_37_2080_2099"))
+  p4a <- plot_scenarios_bars(df, param, paste0(rcp ,"_measure_39_2000_2019"))
+  p4b <- plot_scenarios_bars(df, param, paste0(rcp ,"_measure_39_2040_2059"))
+  p4c <- plot_scenarios_bars(df, param, paste0(rcp ,"_measure_39_2080_2099"))
+  p5a <- plot_scenarios_bars(df, param, paste0(rcp ,"_measure_40_2000_2019"))
+  p5b <- plot_scenarios_bars(df, param, paste0(rcp ,"_measure_40_2040_2059"))
+  p5c <- plot_scenarios_bars(df, param, paste0(rcp ,"_measure_40_2080_2099"))
+
+  ##Making grid plot
+  prow <- plot_grid(
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    p1a + theme(legend.position="none"),
+    p1b + theme(legend.position="none"),
+    p1c + theme(legend.position="none"),
+    NULL,
+    p2a + theme(legend.position="none"),
+    p2b + theme(legend.position="none"),
+    p2c + theme(legend.position="none"),
+    NULL,
+    p3a + theme(legend.position="none"),
+    p3b + theme(legend.position="none"),
+    p3c + theme(legend.position="none"),
+    NULL,
+    p4a + theme(legend.position="none"),
+    p4b + theme(legend.position="none"),
+    p4c + theme(legend.position="none"),
+    NULL,
+    p5a + theme(legend.position="none"),
+    p5b + theme(legend.position="none"),
+    p5c + theme(legend.position="none"),
+    ##Putting up labels
+    labels = c("", "2000 - 2019", "2040 - 2059", "2080 - 2099",
+               # "Baseline", "", "", "",
+               "Grassland \nconversion", "", "", "",
+               "Reduction \nof \nfertilization", "", "", "",
+               "No-till \nfarming", "", "", "",
+               "Winter \ncover \ncrops", "", "", "",
+               "Stubble \nfields in \nwinter", "", "", ""),
+    ncol = 4,
+    nrow = 6,
+    label_x = .5,
+    hjust = 0,
+    label_size=8,
+    rel_heights = c(0.2, 1, 1, 1, 1, 1),
+    rel_widths = c(0.9, 1, 1, 1),
+    align="hv"
+  )
+  # extract the legend from one of the plots
+  legend <- get_legend(
+    # create some space to the left of the legend
+    p1a + theme(legend.box.margin = margin(0, 0, 0, 12))
+  )
+  ##Title
+  title <- ggdraw() + draw_label(paste(param, "in", rcp, "scenario"), fontface='bold')
+  ##Legend
+  final_plot <- plot_grid(prow, legend, rel_widths = c(3, .5))
+  ##Final
+  final_plot <- plot_grid(title, final_plot, ncol=1, rel_heights=c(0.1, 1))
+  return(final_plot)
+}
+
+
+#' Function to plot grid of bars plots comparing not baseline periods of baseline scenario..
+#'
+#'This function put out modeling results on a grid of bars plots.
+#'This grid plot of plots allows to see baseline scenario results during not baseline periods.
+#'Also allows to compare results of different RCM.
+#'
+#' @param df Data.frame of imported output.*** SWAT file. Data
+#' should be summed to one per scenario and period and showing relative change to
+#' baseline.
+#' @param param String showing, which parameters of df to put on a plot.
+#' @param rcp String showing, which climate change scenario to use (currently only "rcp45" or "rcp85" available)
+#' @importFrom cowplot plot_grid get_legend ggdraw draw_label
+#' @importFrom ggplot2 theme margin
+#' @return Grid of bar plots
+#' @export
+#' @examples
+#' ##plot_baseline_grid_bars(df, "NT", "rcp45")
+
+plot_baseline_grid_bars <- function(df, param, rcp){
+  ##Setting up bar plots for measures and periods
+  p1a <- plot_scenarios_bars(df, param, paste0(rcp ,"_baseline_2040_2059"))
+  p1b <- plot_scenarios_bars(df, param, paste0(rcp ,"_baseline_2080_2099"))
+
+  ##Making grid plot
+  prow <- plot_grid(
+    p1a + theme(legend.position="none"),
+    p1b + theme(legend.position="none"),
+    ##Putting up labels
+    labels = c("2040 - 2059", "2080 - 2099"),
+    ncol = 1,
+    nrow = 2,
+    label_x = .5,
+    hjust = 0,
+    label_size=8,
+    rel_heights = c(1, 1),
+    rel_widths = c(1),
+    align="hv"
+  )
+  # extract the legend from one of the plots
+  legend <- get_legend(
+    # create some space to the left of the legend
+    p1a + theme(legend.box.margin = margin(0, 0, 0, 12))
+  )
+  ##Title
+  title <- ggdraw() + draw_label(paste(param, "in", rcp, "scenario"), fontface='bold')
+  ##Legend
+  final_plot <- plot_grid(prow, legend, rel_widths = c(3, .5))
+  ##Final
+  final_plot <- plot_grid(title, final_plot, ncol=1, rel_heights=c(0.1, 1))
+  return(final_plot)
+}
+

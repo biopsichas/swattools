@@ -24,7 +24,8 @@ Imports:
     sf,
     scales,
     ggplot2,
-    stringr
+    stringr,
+    cowplot
 URL: https://github.com/biopsichas/swattools
 BugReports: https://github.com/biopsichas/swattools/issues
 Roxygen: list(markdown = TRUE)
