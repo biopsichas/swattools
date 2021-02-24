@@ -295,15 +295,15 @@ get_main_parameters <- function(df){
                      "PERIOD", "RCH", "date", "LULC", "HRU", "GIS", "SUB", "m_AREAkm2", "COSTe_ha")
   ##Calculating main parameters
   df <- data.frame(df[,(names(df) %in% drops_columns)],
-                   NT = (df[,grep("^ORGN", colnames(df))] +
-                           df[,grep("^NSURQ", colnames(df))] +
-                           df[,grep("^LATNO3", colnames(df))] +
-                           df[,grep("^GWNO3", colnames(df))] +
-                           df[,grep("^TNO3", colnames(df))]),
-                   PT = (df[,grep("^ORGP", colnames(df))] +
-                           df[,grep("^SOLP", colnames(df))] +
-                           df[,grep("^SEDP", colnames(df))]),
-                   ST = df[,grep("^SYLD", colnames(df))],
-                   Q = df[,grep("^WYLD", colnames(df))])
+                   NT = unlist((df[,grep("^ORGN", colnames(df))] +
+                                  df[,grep("^NSURQ", colnames(df))] +
+                                  df[,grep("^LATNO3", colnames(df))] +
+                                  df[,grep("^GWNO3", colnames(df))] +
+                                  df[,grep("^TNO3", colnames(df))])),
+                   PT = unlist((df[,grep("^ORGP", colnames(df))] +
+                                  df[,grep("^SOLP", colnames(df))] +
+                                  df[,grep("^SEDP", colnames(df))])),
+                   ST = unlist(df[,grep("^SYLD", colnames(df))]),
+                   Q = unlist(df[,grep("^WYLD", colnames(df))]))
   return(df)
 }
