@@ -74,7 +74,7 @@ extract_watersheds_output <- function(watersheds_folder_path, scenarios, output_
               df_sub <- f_df
             }
           } else if (f == "hru"){
-            if (length(df_sub) != 0){
+            if (length(df_hru) != 0){
               df_hru <- bind_rows(df_hru, f_df)
             } else {
               df_hru <- f_df
@@ -98,7 +98,7 @@ extract_watersheds_output <- function(watersheds_folder_path, scenarios, output_
     if (length(df_sub) != 0){
       save(df_sub, file = "sub.rda")
     }
-    if (length(df_sub) != 0){
+    if (length(df_hru) != 0){
       save(df_hru, file = "hru.rda")
     }
     print("Finished saving results into .rda files. files are in working directory.")
