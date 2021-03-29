@@ -7,27 +7,30 @@
 #' @param df Data.frame of imported output.*** SWAT file
 #' @param starting_year Number representing starting year of period (example 2000)
 #' @param ending_year Number representing ending year of period (example 2019)
+#' @param data_type One letter sting "y" for yearly or "m" for monthly
 #' @return Data.frame of averaged data over period
 #' @importFrom dplyr filter select %>% group_by summarise_all mutate
+#' @importFrom lubridate month
 #' @export
 
-get_period_means <- function(df, starting_year, ending_year){
+get_period_means <- function(df, starting_year, ending_year, data_type = "y"){
 
   #Filtering data frame for the selected years
   df <- df %>% filter(date >= as.Date(ISOdate(starting_year, 1, 1)) &
                         date <= as.Date(ISOdate(ending_year, 12, 31))) %>%
+    mutate(MONTH = month(date)) %>%
     select(-date)
 
   ##Identifying inputs to the function
   if ("RCH" %in% names(df)){
     df <- df %>%
-      group_by(SUBBASIN, SETUP, SC_FOLDER, SCENARIO, RCH) %>%
-      summarise_all(funs(mean)) %>%
+      group_by(SUBBASIN, SETUP, SC_FOLDER, SCENARIO, RCH, MONTH) %>%
+      summarise_all(list(~mean)) %>%
       mutate(PERIOD = paste0(as.character(starting_year), "_",
                              as.character(ending_year)))
   } else if ("LULC" %in% names(df)){
     df <- df %>%
-      group_by(SUBBASIN, SETUP, SC_FOLDER, SCENARIO, LULC, HRU, GIS, SUB) %>%
+      group_by(SUBBASIN, SETUP, SC_FOLDER, SCENARIO, LULC, HRU, GIS, SUB, MONTH) %>%
       summarise_all(list(~mean)) %>%
       mutate(PERIOD = paste0(as.character(starting_year), "_",
                              as.character(ending_year)))
@@ -36,6 +39,10 @@ get_period_means <- function(df, starting_year, ending_year){
     'hru' output file!!!")
   }
   df <- within(df,  SCENARIO <- paste(SCENARIO, PERIOD, sep="_"))
+  if(data_type == "y"){
+    df <- df %>%
+      select(-MONTH)
+  }
   return (df)
 }
 
@@ -53,10 +60,16 @@ get_period_means <- function(df, starting_year, ending_year){
 get_collapsed_results_to_setups <- function(df){
 
   ##Identifying inputs to the function
-  if ("FLOW_OUTcms" %in% names(df)){
+  ##rch
+  if ("FLOW_OUTcms" %in% names(df) & "MONTH" %in% names(df)){
     df <- df %>%
-      group_by(SCENARIO) %>%
+      group_by(SCENARIO, MONTH) %>%
       top_n(1, AREAkm2)
+  } else if ("FLOW_OUTcms" %in% names(df)){
+    df <- df %>%
+      group_by(SCENARIO, MONTH) %>%
+      top_n(1, AREAkm2)
+    ##sub
   } else if("WYLDmm" %in% names(df)){
     df <- df %>%
       mutate_at(vars(ends_with('mm')), funs(.*AREAkm2*1000)) %>%
@@ -69,12 +82,19 @@ get_collapsed_results_to_setups <- function(df){
 
     df <- df %>%
       select(-RCH)
+    ##raw
     if ("date" %in% names(df)){
       df <- df %>%
         group_by(SCENARIO, date) %>%
         mutate(across(is.numeric, sum)) %>%
         distinct()
-    } else if ("PERIOD" %in% names(df)){
+      ##averaged for periods
+    } else if ("PERIOD" %in% names(df) & "MONTH" %in% names(df)){
+      df <- df %>%
+        group_by(SCENARIO, PERIOD, MONTH) %>%
+        mutate(across(is.numeric, sum)) %>%
+        distinct()
+    } else if("PERIOD" %in% names(df)){
       df <- df %>%
         group_by(SCENARIO, PERIOD) %>%
         mutate(across(is.numeric, sum)) %>%
@@ -93,15 +113,16 @@ get_collapsed_results_to_setups <- function(df){
 #' @param df Data.frame of imported output.*** SWAT file
 #' @param period_list List of periods used in averaging data  (example
 #' period_list <- list (base = c(2000, 2019), mid = c(2040, 2059), end = c(2080, 2099)))
+#' @param data_type One letter sting "y" for yearly or "m" for monthly
 #' @return Data.frame of averaged data over periods and collapsed to setups
 #' (it means removing reach information).
 #' @importFrom dplyr bind_rows arrange
 #' @export
 
-get_averaged_collapsed_data <- function(df, period_list){
+get_averaged_collapsed_data <- function(df, period_list, data_type = "y"){
   df_save <- NULL
   for (period in period_list){
-    df_averaged <- get_period_means(df, period[1], period[2])
+    df_averaged <- get_period_means(df, period[1], period[2], data_type)
     df_collapsed <- get_collapsed_results_to_setups(df_averaged)
     if(length(df_save) != 0){
       df_save <- bind_rows(df_save, df_collapsed)
@@ -109,8 +130,13 @@ get_averaged_collapsed_data <- function(df, period_list){
       df_save <- df_collapsed
     }
   }
-  df_save <- df_save %>%
-    arrange(SCENARIO)
+  if(data_type == "y"){
+    df_save <- df_save %>%
+      arrange(SCENARIO)
+  } else {
+    df_save <- df_save %>%
+      arrange(SCENARIO, MONTH)
+  }
   return(df_save)
 }
 

@@ -4,7 +4,7 @@
 \alias{get_period_means}
 \title{Function to average output data over some period}
 \usage{
-get_period_means(df, starting_year, ending_year)
+get_period_means(df, starting_year, ending_year, data_type = "y")
 }
 \arguments{
 \item{df}{Data.frame of imported output.*** SWAT file}
@@ -12,6 +12,8 @@ get_period_means(df, starting_year, ending_year)
 \item{starting_year}{Number representing starting year of period (example 2000)}
 
 \item{ending_year}{Number representing ending year of period (example 2019)}
+
+\item{data_type}{One letter sting "y" for yearly or "m" for monthly}
 }
 \value{
 Data.frame of averaged data over period
