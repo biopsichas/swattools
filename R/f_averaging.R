@@ -25,13 +25,13 @@ get_period_means <- function(df, starting_year, ending_year, data_type = "y"){
   if ("RCH" %in% names(df)){
     df <- df %>%
       group_by(SUBBASIN, SETUP, SC_FOLDER, SCENARIO, RCH, MONTH) %>%
-      summarise_all(list(~mean)) %>%
+      summarise_all(mean) %>%
       mutate(PERIOD = paste0(as.character(starting_year), "_",
                              as.character(ending_year)))
   } else if ("LULC" %in% names(df)){
     df <- df %>%
       group_by(SUBBASIN, SETUP, SC_FOLDER, SCENARIO, LULC, HRU, GIS, SUB, MONTH) %>%
-      summarise_all(list(~mean)) %>%
+      summarise_all(mean) %>%
       mutate(PERIOD = paste0(as.character(starting_year), "_",
                              as.character(ending_year)))
   } else{
@@ -45,6 +45,7 @@ get_period_means <- function(df, starting_year, ending_year, data_type = "y"){
   }
   return (df)
 }
+
 
 #' Function to sum up output data over setups
 #'
@@ -67,7 +68,7 @@ get_collapsed_results_to_setups <- function(df){
       top_n(1, AREAkm2)
   } else if ("FLOW_OUTcms" %in% names(df)){
     df <- df %>%
-      group_by(SCENARIO, MONTH) %>%
+      group_by(SCENARIO) %>%
       top_n(1, AREAkm2)
     ##sub
   } else if("WYLDmm" %in% names(df)){
@@ -81,6 +82,7 @@ get_collapsed_results_to_setups <- function(df){
     names(df) <- gsub(x = names(df), pattern = "t/ha", replacement = "t/y")
 
     df <- df %>%
+      ungroup() %>%
       select(-RCH)
     ##raw
     if ("date" %in% names(df)){
