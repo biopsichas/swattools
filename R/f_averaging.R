@@ -73,9 +73,9 @@ get_collapsed_results_to_setups <- function(df){
     ##sub
   } else if("WYLDmm" %in% names(df)){
     df <- df %>%
-      mutate_at(vars(ends_with('mm')), funs(.*AREAkm2*1000)) %>%
-      mutate_at(vars(ends_with("kg/ha")), funs(.*AREAkm2*0.1)) %>%
-      mutate_at(vars(ends_with("t/ha")), funs(.*AREAkm2*100))
+      mutate(across(ends_with('mm'), ~.*AREAkm2*1000)) %>%
+      mutate(across(ends_with("kg/ha"), ~.*AREAkm2*0.1)) %>%
+      mutate(across(ends_with("t/ha"), ~.*AREAkm2*100))
 
     names(df) <- gsub(x = names(df), pattern = "mm", replacement = "cms/y")
     names(df) <- gsub(x = names(df), pattern = "kg/ha", replacement = "t/y")
@@ -88,18 +88,18 @@ get_collapsed_results_to_setups <- function(df){
     if ("date" %in% names(df)){
       df <- df %>%
         group_by(SCENARIO, date) %>%
-        mutate(across(is.numeric, sum)) %>%
+        mutate(across(where(is.numeric), sum)) %>%
         distinct()
       ##averaged for periods
     } else if ("PERIOD" %in% names(df) & "MONTH" %in% names(df)){
       df <- df %>%
         group_by(SCENARIO, PERIOD, MONTH) %>%
-        mutate(across(is.numeric, sum)) %>%
+        mutate(across(where(is.numeric), sum)) %>%
         distinct()
     } else if("PERIOD" %in% names(df)){
       df <- df %>%
         group_by(SCENARIO, PERIOD) %>%
-        mutate(across(is.numeric, sum)) %>%
+        mutate(across(where(is.numeric), sum)) %>%
         distinct()
     }
   } else {
@@ -135,7 +135,7 @@ get_averaged_collapsed_data <- function(df, period_list, data_type = "y"){
   if(data_type == "y"){
     df_save <- df_save %>%
       arrange(SCENARIO)
-  } else {
+  } else if (data_type == "m"){
     df_save <- df_save %>%
       arrange(SCENARIO, MONTH)
   }
@@ -150,41 +150,37 @@ get_averaged_collapsed_data <- function(df, period_list, data_type = "y"){
 #' @param df Data.frame of imported output.*** SWAT file
 #' @param period_list List of periods used in averaging data  (example
 #' period_list <- list (base = c(2000, 2019), mid = c(2040, 2059), end = c(2080, 2099)))
+#' @param data_type One letter sting "y" for yearly or "m" for monthly
 #' @return Data.frame of summed up over scenarios.
-#' @importFrom dplyr filter ungroup select_if mutate across distinct select
+#' @importFrom dplyr filter ungroup mutate across distinct select
 #' @importFrom tidyselect everything
 #' @export
 
-get_scenario_sub_sums <- function(df, period_list){
+get_scenario_sub_sums <- function(df, period_list, data_type = "y"){
   ##Getting averaged and collapsed data to the periods and setups
-  df <- get_averaged_collapsed_data(df, period_list)
-  SC_FOLDER_names <- unique(df$SC_FOLDER)
-  PERIOD_names <- unique(df$PERIOD)
-  ##Providing vector of scenarios
-  scenarios <- as.vector(outer(SC_FOLDER_names, PERIOD_names, paste, sep="_"))
-  df_result <- NULL
-  for (scenario in scenarios){
-    ##Identifying scenario and summing up its values.
-    df_selected <- df %>%
-      filter(grepl(scenario, SCENARIO)) %>%
-      ungroup() %>%
-      select_if(~is.numeric(.x)) %>%
+  df <- get_averaged_collapsed_data(df, period_list, data_type) %>%
+    ungroup() %>%
+    select(SC_FOLDER, PERIOD, which(sapply(.,class)=="numeric"))
+  if (data_type == "y"){
+    df_r <- df %>%
+      group_by(SC_FOLDER, PERIOD) %>%
       mutate(across(is.numeric, sum)) %>%
       distinct() %>%
-      mutate(SCENARIO = scenario)
-    ##Saving result
-    if (length(df_result) != 0){
-      df_result <- bind_rows(df_result, df_selected)
-    } else {
-      df_result <- df_selected
-    }
+      mutate(SCENARIO = paste0(SC_FOLDER, "_", PERIOD))
+    df_r <- df_r %>%
+      select(SCENARIO, AREAkm2, everything())
+  } else if (data_type == "m"){
+    df_r <- df %>%
+      group_by(SC_FOLDER, PERIOD, MONTH) %>%
+      mutate(MONTH = as.character(MONTH)) %>%
+      mutate(across(is.numeric, sum)) %>%
+      distinct() %>%
+      mutate(SCENARIO = paste0(SC_FOLDER, "_", PERIOD))
+    df_r <- df_r %>%
+      select(SCENARIO, MONTH, AREAkm2, everything())
   }
-  df_result <- df_result %>%
-    select(SCENARIO, AREAkm2, everything())
-
-  return(df_result)
+  return(df_r)
 }
-
 
 #' Function to get effectiveness of measures over scenarios in kg per ha of implemented measures
 #'

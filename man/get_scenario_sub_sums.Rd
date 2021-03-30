@@ -4,13 +4,15 @@
 \alias{get_scenario_sub_sums}
 \title{Function to get sums of 'sub' data over scenarios}
 \usage{
-get_scenario_sub_sums(df, period_list)
+get_scenario_sub_sums(df, period_list, data_type = "y")
 }
 \arguments{
 \item{df}{Data.frame of imported output.*** SWAT file}
 
 \item{period_list}{List of periods used in averaging data  (example
 period_list <- list (base = c(2000, 2019), mid = c(2040, 2059), end = c(2080, 2099)))}
+
+\item{data_type}{One letter sting "y" for yearly or "m" for monthly}
 }
 \value{
 Data.frame of summed up over scenarios.
