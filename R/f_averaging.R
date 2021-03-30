@@ -59,7 +59,6 @@ get_period_means <- function(df, starting_year, ending_year, data_type = "y"){
 #' @export
 
 get_collapsed_results_to_setups <- function(df){
-
   ##Identifying inputs to the function
   ##rch
   if ("FLOW_OUTcms" %in% names(df) & "MONTH" %in% names(df)){
@@ -105,7 +104,7 @@ get_collapsed_results_to_setups <- function(df){
   } else {
     stop("Dataframe doesn't hold data from 'rch' or 'sub' output files!!!")
   }
-  return(df)
+  return(df %>% ungroup())
 }
 
 #' Function to get averaged by periods and collapsed data by setups
@@ -168,7 +167,8 @@ get_scenario_sub_sums <- function(df, period_list, data_type = "y"){
       distinct() %>%
       mutate(SCENARIO = paste0(SC_FOLDER, "_", PERIOD))
     df_r <- df_r %>%
-      select(SCENARIO, AREAkm2, everything())
+      ungroup() %>%
+      select(SCENARIO, AREAkm2, everything(), -c(SC_FOLDER, PERIOD))
   } else if (data_type == "m"){
     df_r <- df %>%
       group_by(SC_FOLDER, PERIOD, MONTH) %>%
@@ -177,10 +177,12 @@ get_scenario_sub_sums <- function(df, period_list, data_type = "y"){
       distinct() %>%
       mutate(SCENARIO = paste0(SC_FOLDER, "_", PERIOD))
     df_r <- df_r %>%
-      select(SCENARIO, MONTH, AREAkm2, everything())
+      ungroup() %>%
+      select(SCENARIO, MONTH, AREAkm2, everything(), -c(SC_FOLDER, PERIOD))
   }
   return(df_r)
 }
+
 
 #' Function to get effectiveness of measures over scenarios in kg per ha of implemented measures
 #'
