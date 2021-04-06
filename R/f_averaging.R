@@ -104,9 +104,10 @@ get_collapsed_results_to_setups <- function(df, rch = FALSE){
           distinct()
       }
       ##Only for yearly to leave RCH for maps.
-    } else {
+    } else if (rch == TRUE) {
       df <- df %>%
         ungroup() %>%
+        mutate(RCH = as.character(RCH)) %>%
         group_by(SCENARIO, PERIOD, RCH) %>%
         mutate(across(where(is.numeric), sum)) %>%
         distinct()
