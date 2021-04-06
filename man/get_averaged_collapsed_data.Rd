@@ -12,9 +12,9 @@ get_averaged_collapsed_data(df, period_list, data_type = "y", rch = FALSE)
 \item{period_list}{List of periods used in averaging data  (example
 period_list <- list (base = c(2000, 2019), mid = c(2040, 2059), end = c(2080, 2099)))}
 
-\item{data_type}{One letter sting "y" for yearly or "m" for monthly}
+\item{data_type}{One letter sting "y" for yearly or "m" for monthly.}
 
-\item{rch}{TRUE or FALSE to leave reach numbers for subbasin data}
+\item{rch}{TRUE or FALSE to leave reach numbers for yearly data.}
 }
 \value{
 Data.frame of averaged data over periods and collapsed to setups

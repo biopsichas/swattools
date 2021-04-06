@@ -54,7 +54,7 @@ get_period_means <- function(df, starting_year, ending_year, data_type = "y"){
 #' extract_watersheds_output function.
 #'
 #' @param df Data.frame of imported output.*** SWAT file
-#' @param rch TRUE or FALSE to leave reach numbers for subbasin data
+#' @param rch TRUE or FALSE to leave reach numbers for yearly data
 #' @return Data.frame of summed up data over setups
 #' @importFrom dplyr select %>% group_by top_n mutate_at mutate across ends_with vars funs distinct
 #' @export
@@ -67,9 +67,11 @@ get_collapsed_results_to_setups <- function(df, rch = FALSE){
       group_by(SCENARIO, MONTH) %>%
       top_n(1, AREAkm2)
   } else if ("FLOW_OUTcms" %in% names(df)){
-    df <- df %>%
-      group_by(SCENARIO) %>%
-      top_n(1, AREAkm2)
+    if(rch == FALSE){
+      df <- df %>%
+        group_by(SCENARIO) %>%
+        top_n(1, AREAkm2)
+    }
     ##sub
   } else if("WYLDmm" %in% names(df)){
     df <- df %>%
@@ -125,8 +127,8 @@ get_collapsed_results_to_setups <- function(df, rch = FALSE){
 #' @param df Data.frame of imported output.*** SWAT file
 #' @param period_list List of periods used in averaging data  (example
 #' period_list <- list (base = c(2000, 2019), mid = c(2040, 2059), end = c(2080, 2099)))
-#' @param data_type One letter sting "y" for yearly or "m" for monthly
-#' @param rch TRUE or FALSE to leave reach numbers for subbasin data
+#' @param data_type One letter sting "y" for yearly or "m" for monthly.
+#' @param rch TRUE or FALSE to leave reach numbers for yearly data.
 #' @return Data.frame of averaged data over periods and collapsed to setups
 #' (it means removing reach information).
 #' @importFrom dplyr bind_rows arrange

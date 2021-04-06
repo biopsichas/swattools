@@ -9,7 +9,7 @@ get_collapsed_results_to_setups(df, rch = FALSE)
 \arguments{
 \item{df}{Data.frame of imported output.*** SWAT file}
 
-\item{rch}{TRUE or FALSE to leave reach numbers for subbasin data}
+\item{rch}{TRUE or FALSE to leave reach numbers for yearly data}
 }
 \value{
 Data.frame of summed up data over setups
