@@ -54,11 +54,12 @@ get_period_means <- function(df, starting_year, ending_year, data_type = "y"){
 #' extract_watersheds_output function.
 #'
 #' @param df Data.frame of imported output.*** SWAT file
+#' @param rch TRUE or FALSE to leave reach numbers for subbasin data
 #' @return Data.frame of summed up data over setups
 #' @importFrom dplyr select %>% group_by top_n mutate_at mutate across ends_with vars funs distinct
 #' @export
 
-get_collapsed_results_to_setups <- function(df){
+get_collapsed_results_to_setups <- function(df, rch = FALSE){
   ##Identifying inputs to the function
   ##rch
   if ("FLOW_OUTcms" %in% names(df) & "MONTH" %in% names(df)){
@@ -80,23 +81,32 @@ get_collapsed_results_to_setups <- function(df){
     names(df) <- gsub(x = names(df), pattern = "kg/ha", replacement = "t/y")
     names(df) <- gsub(x = names(df), pattern = "t/ha", replacement = "t/y")
 
-    df <- df %>%
-      ungroup() %>%
-      select(-RCH)
-    ##raw
-    if ("date" %in% names(df)){
+    if(rch == FALSE){
       df <- df %>%
-        group_by(SCENARIO, date) %>%
-        mutate(across(where(is.numeric), sum)) %>%
-        distinct()
-      ##averaged for periods
-    } else if ("PERIOD" %in% names(df) & "MONTH" %in% names(df)){
+        ungroup() %>%
+        select(-RCH)
+      ##raw
+      if ("date" %in% names(df)){
+        df <- df %>%
+          group_by(SCENARIO, date) %>%
+          mutate(across(where(is.numeric), sum)) %>%
+          distinct()
+        ##averaged for periods
+      } else if ("PERIOD" %in% names(df) & "MONTH" %in% names(df)){
+        df <- df %>%
+          group_by(SCENARIO, PERIOD, MONTH) %>%
+          mutate(across(where(is.numeric), sum)) %>%
+          distinct()
+      } else if("PERIOD" %in% names(df)){
+        df <- df %>%
+          group_by(SCENARIO, PERIOD) %>%
+          mutate(across(where(is.numeric), sum)) %>%
+          distinct()
+      }
+      ##Only for yearly to leave RCH for maps.
+    } else {
       df <- df %>%
-        group_by(SCENARIO, PERIOD, MONTH) %>%
-        mutate(across(where(is.numeric), sum)) %>%
-        distinct()
-    } else if("PERIOD" %in% names(df)){
-      df <- df %>%
+        ungroup() %>%
         group_by(SCENARIO, PERIOD) %>%
         mutate(across(where(is.numeric), sum)) %>%
         distinct()
@@ -115,16 +125,17 @@ get_collapsed_results_to_setups <- function(df){
 #' @param period_list List of periods used in averaging data  (example
 #' period_list <- list (base = c(2000, 2019), mid = c(2040, 2059), end = c(2080, 2099)))
 #' @param data_type One letter sting "y" for yearly or "m" for monthly
+#' @param rch TRUE or FALSE to leave reach numbers for subbasin data
 #' @return Data.frame of averaged data over periods and collapsed to setups
 #' (it means removing reach information).
 #' @importFrom dplyr bind_rows arrange
 #' @export
 
-get_averaged_collapsed_data <- function(df, period_list, data_type = "y"){
+get_averaged_collapsed_data <- function(df, period_list, data_type = "y", rch = FALSE){
   df_save <- NULL
   for (period in period_list){
     df_averaged <- get_period_means(df, period[1], period[2], data_type)
-    df_collapsed <- get_collapsed_results_to_setups(df_averaged)
+    df_collapsed <- get_collapsed_results_to_setups(df_averaged, rch)
     if(length(df_save) != 0){
       df_save <- bind_rows(df_save, df_collapsed)
     } else {

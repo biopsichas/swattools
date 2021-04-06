@@ -4,7 +4,7 @@
 \alias{get_averaged_collapsed_data}
 \title{Function to get averaged by periods and collapsed data by setups}
 \usage{
-get_averaged_collapsed_data(df, period_list, data_type = "y")
+get_averaged_collapsed_data(df, period_list, data_type = "y", rch = FALSE)
 }
 \arguments{
 \item{df}{Data.frame of imported output.*** SWAT file}
@@ -13,6 +13,8 @@ get_averaged_collapsed_data(df, period_list, data_type = "y")
 period_list <- list (base = c(2000, 2019), mid = c(2040, 2059), end = c(2080, 2099)))}
 
 \item{data_type}{One letter sting "y" for yearly or "m" for monthly}
+
+\item{rch}{TRUE or FALSE to leave reach numbers for subbasin data}
 }
 \value{
 Data.frame of averaged data over periods and collapsed to setups
