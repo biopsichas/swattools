@@ -107,7 +107,7 @@ get_collapsed_results_to_setups <- function(df, rch = FALSE){
     } else {
       df <- df %>%
         ungroup() %>%
-        group_by(SCENARIO, PERIOD) %>%
+        group_by(SCENARIO, PERIOD, RCH) %>%
         mutate(across(where(is.numeric), sum)) %>%
         distinct()
     }
