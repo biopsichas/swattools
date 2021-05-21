@@ -28,8 +28,8 @@ get_diff_from_baseline <- function(df, baseline_period = NULL, type_of_diff = "r
     baseline_scenarios <- scenarios[grep(base, scenarios)]
     measures_scenarios <- scenarios[-grep(base, scenarios)]
   } else {
-    baseline_scenarios <- scenarios[grep("_baseline$", scenarios)]
-    measures_scenarios <- scenarios[-grep("_baseline$", scenarios)]
+    baseline_scenarios <- scenarios[grep("_baseline", scenarios)]
+    measures_scenarios <- scenarios[-grep("_baseline", scenarios)]
   }
 
   ##Identifying inputs to the function
