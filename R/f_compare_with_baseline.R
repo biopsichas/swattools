@@ -41,6 +41,8 @@ get_diff_from_baseline <- function(df, baseline_period = NULL, type_of_diff = "r
 
   if (length(baseline_period) != 0){
     drops_columns <- c(drops_columns, "PERIOD")
+  } else if ("PERIOD" %in% names(df)){
+    drops_columns <- c(drops_columns[-1], "PERIOD")
   } else if ("RCH" %in% names(df)){
     df <- df %>%
       arrange(date, RCH)
